@@ -12,9 +12,10 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 # 3. Fonction pour charger les données proprement
 def charger_donnees(nom_onglet):
     try:
-        return conn.read(worksheet=nom_onglet)
+        # On ajoute ttl=0 pour forcer Streamlit à ne pas utiliser de cache
+        return conn.read(worksheet=nom_onglet, ttl=0)
     except Exception as e:
-        st.error(f"Impossible de lire l'onglet '{nom_onglet}'. Vérifiez le nom dans Google Sheets.")
+        st.error(f"Erreur technique : {e}") # Ceci nous affichera la VRAIE erreur
         return pd.DataFrame()
 
 # 4. Chargement des données
