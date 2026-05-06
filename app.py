@@ -23,7 +23,7 @@ st.set_page_config(page_title="Syndic Mobile", layout="wide", page_icon="🏢")
 # Connexion à Google Sheets
 # --- REMPLACE LA LIGNE 11 PAR CELLE-CI ---
 # On utilise directement le lien CSV (remplace TON_ID par ton vrai ID)
-URL_MEMBRES = "https://docs.google.com/__________"
+URL_MEMBRES = "https://docs.google.com/spreadsheets/d/1HYzTP9oGbv3yDprhmPLG39XS07qdej8GTSsN0ObxIes/edit?gid=0#gid=0"
 
 def charger_donnees_test():
     try:
