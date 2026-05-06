@@ -7,7 +7,19 @@ from datetime import date
 st.set_page_config(page_title="Syndic Mobile", layout="wide", page_icon="🏢")
 
 # Connexion à Google Sheets
-conn = st.connection("gsheets", type=GSheetsConnection)
+# --- REMPLACE LA LIGNE 11 PAR CELLE-CI ---
+# On utilise directement le lien CSV (remplace TON_ID par ton vrai ID)
+URL_MEMBRES = "https://docs.google.com/spreadsheets/d/1HYzTP9oGbv3yDprhmPLG39XS07qdej8GTSsN0ObxIes/gviz/tq?tqx=out:csv&sheet=membres"
+
+def charger_donnees_test():
+    try:
+        return pd.read_csv(URL_MEMBRES)
+    except Exception as e:
+        st.error(f"Erreur de lecture directe : {e}")
+        return pd.DataFrame()
+
+df_m = charger_donnees_test()
+# ... garde le reste du code identique ...
 
 # Fonction de chargement sécurisée
 def charger_donnees(nom_onglet):
