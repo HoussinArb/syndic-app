@@ -1,7 +1,28 @@
+
+from datetime import date
+
+# 1. Les imports
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
-from datetime import date
+
+# 2. LA LIGNE MANQUANTE (Vérifiez qu'elle est bien là !)
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+# 3. La fonction qui utilise 'conn'
+def charger_donnees(nom_onglet):
+    try:
+        # C'est ici que le code cherche 'conn'
+        return conn.read(worksheet=nom_onglet, ttl=0)
+    except Exception as e:
+        st.error(f"Erreur sur l'onglet '{nom_onglet}' : {e}")
+        return pd.DataFrame()
+
+
+
+
+
+
 
 # Configuration de la page
 st.set_page_config(page_title="Syndic Mobile", layout="wide", page_icon="🏢")
