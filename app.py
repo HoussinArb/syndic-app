@@ -7,8 +7,18 @@ from datetime import date
 st.set_page_config(page_title="Syndic Mobile", layout="wide")
 
 # --- CONNEXION À GOOGLE SHEETS ---
-# URL de votre feuille (celle que vous avez copiée)
-url_gsheet = "https://docs.google.com/spreadsheets/d/1HYzTP9oGbv3yDprhmPLG39XS07qdej8GTSsN0ObxIes/edit?usp=sharing"
+# On ne met plus l*   **Lien copié :** `https://docs.google.com/spreadsheets/d/1'URL ici, elle sera cachée dans les paramètres de l'app
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+def charger_donneABC_123_XYZ/edit?es(onglet):
+    # La connexion utilisera les secrets configurés dans Streamlit Cloud
+    return conn.read(worksheet=onglet)
+usp=sharing`
+*   **Lien à mettre :** `https://docs.google.com/spreadsheets/d/1ABC_123_XYZ/edit#gid=0`
+
+### 2. Procédure de modification sur GitHub
+1.  Ouvrez votre **Repository** sur GitHub.
+2
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
