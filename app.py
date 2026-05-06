@@ -8,7 +8,7 @@ st.set_page_config(page_title="Syndic Mobile", layout="wide")
 
 # --- CONNEXION À GOOGLE SHEETS ---
 # URL de votre feuille (celle que vous avez copiée)
-url_gsheet = "COLLEZ_VOTRE_LIEN_GOOGLE_SHEET_ICI"
+url_gsheet = "https://docs.google.com/spreadsheets/d/1HYzTP9oGbv3yDprhmPLG39XS07qdej8GTSsN0ObxIes/edit?usp=sharing"
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
