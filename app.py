@@ -16,8 +16,8 @@ def get_url(gid):
 
 # IDs des onglets (GID) - À vérifier dans ton navigateur
 URL_MEMBRES = get_url("0")           # Souvent 0
-URL_PAIEMENTS = get_url("1234567")   # Remplace par le GID de l'onglet paiements
-URL_DEPENSES = get_url("8901234")    # Remplace par le GID de l'onglet depenses
+URL_PAIEMENTS = get_url("469308404")   # Remplace par le GID de l'onglet paiements
+URL_DEPENSES = get_url("108011384")    # Remplace par le GID de l'onglet depenses
 
 # Connexion pour l'écriture (update)
 conn = st.connection("gsheets", type=GSheetsConnection)
