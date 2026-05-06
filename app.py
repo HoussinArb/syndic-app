@@ -1,7 +1,5 @@
-
-from datetime import date
-
 # 1. Les imports
+from datetime import date
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
@@ -19,18 +17,13 @@ def charger_donnees(nom_onglet):
         return pd.DataFrame()
 
 
-
-
-
-
-
 # Configuration de la page
 st.set_page_config(page_title="Syndic Mobile", layout="wide", page_icon="🏢")
 
 # Connexion à Google Sheets
 # --- REMPLACE LA LIGNE 11 PAR CELLE-CI ---
 # On utilise directement le lien CSV (remplace TON_ID par ton vrai ID)
-URL_MEMBRES = "https://docs.google.com/spreadsheets/d/1HYzTP9oGbv3yDprhmPLG39XS07qdej8GTSsN0ObxIes/gviz/tq?tqx=out:csv&sheet=membres"
+URL_MEMBRES = "https://docs.google.com/__________"
 
 def charger_donnees_test():
     try:
