@@ -19,9 +19,9 @@ def charger_donnees(nom_onglet):
         return pd.DataFrame()
 
 # 4. Chargement des données
-df_m = charger_donnees("membres")
-df_p = charger_donnees("paiements")
-df_d = charger_donnees("depenses")
+df_m = charger_donnees()
+df_p = charger_donnees()
+df_d = charger_donnees()
 
 # --- INTERFACE UTILISATEUR ---
 st.title("🏢 Gestion Syndic")
