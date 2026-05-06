@@ -3,70 +3,49 @@ from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 from datetime import date
 
-# --- CONFIGURATION DE LA PAGE ---
+# --- CONFIGURATION ---
 st.set_page_config(page_title="Syndic Mobile", layout="wide")
 
-# --- CONNEXION À GOOGLE SHEETS ---
+# Connexion via les "Secrets" (configurés sur Streamlit Cloud)
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-def charger_donneABC_123_XYZ/edit?es(onglet):
-    # La connexion utilisera les secrets configurés dans Streamlit Cloud
-    return conn.read(worksheet=onglet)
-usp=sharing`
-*   **Lien à mettre :** `https://docs.google.com/spreadsheets/d/1ABC_123_XYZ/edit#gid=0`
-
-### 2. Procédure de modification sur GitHub
-1.  Ouvrez votre **Repository** sur GitHub.
-2
-
-conn = st.connection("gsheets", type=GSheetsConnection)
-
+# --- FONCTIONS DE CHARGEMENT ---
 def charger_donnees(onglet):
-    return conn.read(spreadsheet=url_gsheet, worksheet=onglet)
+    # Lit l'onglet spécifié dans la Google Sheet définie dans les Secrets
+    return conn.read(worksheet=onglet)
 
-# --- CHARGEMENT DES DONNÉES ---
-df_m = charger_donnees("membres")
-df_p = charger_donnees("paiements")
-df_d = charger_donnees("depenses")
+# --- CHARGEMENT ---
+try:
+    df_m = charger_donnees("membres")
+    df_p = charger_donnees("paiements")
+    df_d = charger_donnees("depenses")
+except Exception as e:
+    st.error("Erreur de connexion à Google Sheets. Vérifiez vos Secrets !")
+    st.stop()
 
 # --- INTERFACE ---
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "💰 Paiements", "💸 Dépenses", "⚙️ Admin"])
+st.title("🏢 Syndic Mobile")
+
+tab1, tab2, tab3 = st.tabs(["📊 État", "💰 Encaisser", "⚙️ Admin"])
 
 with tab1:
-    st.title("Tableau de Bord Syndic")
-    # Calculs simples avec Pandas
-    total_recu = df_p['montant'].sum()
-    total_depenses = df_d['montant'].sum()
-    st.metric("Solde Caisse", f"{total_recu - total_depenses} DH")
+    col1, col2 = st.columns(2)
+    col1.metric("Total Recettes", f"{df_p['montant'].sum()} DH")
+    col2.metric("Total Dépenses", f"{df_d['montant'].sum()} DH")
 
 with tab2:
-    st.subheader("Encaisser une cotisation")
-    with st.form("ajout_paiement"):
-        # On crée une liste pour le menu déroulant : "NOM (Appt)"
-        liste_membres = {f"{row['nom']} ({row['appartement']})": row['id'] for _, row in df_m.iterrows()}
-        membre_sel = st.selectbox("Copropriétaire", options=liste_membres.keys())
-        montant = st.number_input("Montant (DH)", min_value=0)
-        
-        if st.form_submit_button("Enregistrer le paiement"):
-            new_p = pd.DataFrame([{"id": len(df_p)+1, "membre_id": liste_membres[membre_sel], 
-                                   "montant": montant, "date_paiement": str(date.today())}])
-            # On ajoute la ligne au tableau existant
-            df_p_updated = pd.concat([df_p, new_p], ignore_index=True)
-            conn.update(spreadsheet=url_gsheet, worksheet="paiements", data=df_p_updated)
-            st.success("Paiement enregistré sur le Cloud !")
+    st.subheader("Nouveau Paiement")
+    with st.form("p_form"):
+        # On prépare la liste des membres pour le menu déroulant
+        choix = {f"{r['nom']} ({r['appartement']})": r['id'] for _, r in df_m.iterrows()}
+        membre = st.selectbox("Copropriétaire", options=choix.keys())
+        montant = st.number_input("Montant", min_value=0)
+        if st.form_submit_button("Valider"):
+            new_line = pd.DataFrame([{"id": len(df_p)+1, "membre_id": choix[membre], "montant": montant, "date_paiement": str(date.today())}])
+            df_p_new = pd.concat([df_p, new_line], ignore_index=True)
+            conn.update(worksheet="paiements", data=df_p_new)
+            st.success("Enregistré !")
             st.rerun()
 
-# --- NOTE POUR L'ADMIN (L'AJOUT DE MEMBRE) ---
-with tab4:
-    st.subheader("Ajouter un Copropriétaire")
-    with st.form("nouveau_membre"):
-        n_nom = st.text_input("Nom")
-        n_app = st.text_input("N° Appartement")
-        n_em = st.text_input("Email")
-        if st.form_submit_button("Créer le compte"):
-            new_m = pd.DataFrame([{"id": len(df_m)+1, "nom": n_nom.upper(), 
-                                   "appartement": n_app, "email": n_em}])
-            df_m_updated = pd.concat([df_m, new_m], ignore_index=True)
-            conn.update(spreadsheet=url_gsheet, worksheet="membres", data=df_m_updated)
-            st.success("Membre ajouté !")
-            st.rerun()
+with tab3:
+    st.write("Gestion des membres via Google Sheets directement pour l'instant.")
