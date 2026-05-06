@@ -7,7 +7,6 @@ from datetime import date
 st.set_page_config(page_title="Syndic Mobile", layout="wide")
 
 # --- CONNEXION À GOOGLE SHEETS ---
-# On ne met plus l*   **Lien copié :** `https://docs.google.com/spreadsheets/d/1'URL ici, elle sera cachée dans les paramètres de l'app
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def charger_donneABC_123_XYZ/edit?es(onglet):
