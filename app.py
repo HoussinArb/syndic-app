@@ -8,7 +8,7 @@ st.set_page_config(page_title="Syndic Mobile", layout="wide")
 
 # --- RÉGLAGES ---
 # REMPLACE PAR TON ID RÉEL
-SHEET_ID = "TON_ID_ICI" 
+SHEET_ID = "1_dyIcBZaX-GHZ_OApEuS77nxGsNrcgaNa7i1A7VFLAQ" 
 
 # Fonction pour obtenir l'URL CSV (Lecture)
 def get_url(gid):
