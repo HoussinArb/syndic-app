@@ -100,40 +100,33 @@ with tab1:
                     if mt > 0:
                         p_id = int(df_paiements['id'].max() + 1) if not df_paiements.empty else 1
                         nouveau_p = pd.DataFrame([{
-                            "id": p_id, 
-                            "membre_id": options[choix], 
-                            "montant": mt, 
-                            "date_paiement": str(dt)
+                            "id": p_id, "membre_id": options[choix], 
+                            "montant": mt, "date_paiement": str(dt)
                         }])
                         conn.update(worksheet="paiements", data=pd.concat([df_paiements, nouveau_p], ignore_index=True))
                         st.success("Versement enregistré !")
                         st.rerun()
 
     with col_verif:
-        st.subheader("🔍 Dernières saisies")
+        st.subheader("🔍 Corriger contributions")
         if not df_paiements.empty:
-            # On fusionne pour voir le nom du membre au lieu de son ID
+            # Fusion pour afficher les noms
             df_suivi = df_paiements.merge(df_membres[['id', 'nom', 'appartement']], left_on='membre_id', right_on='id', suffixes=('', '_m'))
-            df_suivi = df_suivi.sort_values(by='id', ascending=False).head(5) # Les 5 derniers
+            df_suivi = df_suivi.sort_values(by='id', ascending=False).head(5) # 5 derniers
             
             for _, row in df_suivi.iterrows():
-                with st.expander(f"💰 {row['nom']} ({row['appartement']}) : {row['montant']} DH"):
-                    # Formulaire de correction rapide
-                    new_mt = st.number_input("Corriger montant", value=float(row['montant']), key=f"edit_mt_{row['id']}")
-                    new_dt = st.text_input("Corriger date (AAAA-MM-JJ)", value=row['date_paiement'], key=f"edit_dt_{row['id']}")
+                with st.expander(f"💰 {row['nom']} : {row['montant']} DH"):
+                    c_mt = st.number_input("Montant", value=float(row['montant']), key=f"edit_p_mt_{row['id']}")
+                    c_dt = st.text_input("Date (AAAA-MM-JJ)", value=row['date_paiement'], key=f"edit_p_dt_{row['id']}")
                     
-                    c1, c2 = st.columns(2)
-                    if c1.button("Sauver", key=f"btn_save_{row['id']}"):
-                        # Mise à jour dans le cloud
-                        df_brut = conn.read(worksheet="paiements")
-                        df_brut.loc[df_brut['id'] == row['id'], ['montant', 'date_paiement']] = [new_mt, new_dt]
-                        conn.update(worksheet="paiements", data=df_brut)
+                    b1, b2 = st.columns(2)
+                    if b1.button("Sauver", key=f"save_p_{row['id']}"):
+                        df_p_all = conn.read(worksheet="paiements")
+                        df_p_all.loc[df_p_all['id'] == row['id'], ['montant', 'date_paiement']] = [c_mt, c_dt]
+                        conn.update(worksheet="paiements", data=df_p_all)
                         st.rerun()
-                        
-                    if c2.button("Supprimer", key=f"btn_del_{row['id']}"):
+                    if b2.button("Supprimer", key=f"del_p_{row['id']}"):
                         supprimer_ligne_cloud('paiements', row['id'])
-        else:
-            st.info("Aucun historique pour le moment.")
 
 # ONGLET 2 : BILAN
 # --- ONGLET 2 : BILAN AVEC COULEURS ---
@@ -186,19 +179,41 @@ with tab2:
 
 # ONGLET 3 : DÉPENSES
 with tab3:
-    with st.form("d_form", clear_on_submit=True):
-        t_d = st.text_input("Objet")
-        m_d = st.number_input("Montant", min_value=0.0)
-        dt_d = st.date_input("Date")
-        if st.form_submit_button("Ajouter frais"):
-            d_id = int(df_depenses['id'].max() + 1) if not df_depenses.empty else 1
-            new_d = pd.DataFrame([{"id": d_id, "titre": t_d, "montant": m_d, "date": str(dt_d)}])
-            conn.update(worksheet="depenses", data=pd.concat([df_depenses, new_d], ignore_index=True))
-            st.rerun()
-    for _, r in df_depenses.sort_values('date', ascending=False).iterrows():
-        with st.expander(f"📅 {r['date']} | {r['titre']} : {r['montant']} DH"):
-            if st.button("Supprimer", key=f"del_d_{r['id']}"):
-                supprimer_ligne_cloud('depenses', r['id'])
+    col_d1, col_d2 = st.columns([1, 1])
+
+    with col_d1:
+        st.subheader("💸 Nouvelle dépense")
+        with st.form("f_depense", clear_on_submit=True):
+            objet = st.text_input("Objet (ex: Electricité, Concierge...)")
+            montant_d = st.number_input("Montant dépensé (DH)", min_value=0.0)
+            date_d = st.date_input("Date de la dépense")
+            if st.form_submit_button("Enregistrer la dépense"):
+                if objet and montant_d > 0:
+                    d_id = int(df_depenses['id'].max() + 1) if not df_depenses.empty else 1
+                    nouvelle_d = pd.DataFrame([{"id": d_id, "titre": objet, "montant": montant_d, "date": str(date_d)}])
+                    conn.update(worksheet="depenses", data=pd.concat([df_depenses, nouvelle_d], ignore_index=True))
+                    st.success("Dépense enregistrée !")
+                    st.rerun()
+
+    with col_d2:
+        st.subheader("🔍 Corriger dépenses")
+        if not df_depenses.empty:
+            # On trie pour avoir les plus récentes en haut
+            df_d_list = df_depenses.sort_values(by='id', ascending=False).head(5)
+            for _, row in df_d_list.iterrows():
+                with st.expander(f"🧾 {row['titre']} : {row['montant']} DH"):
+                    edit_titre = st.text_input("Objet", value=row['titre'], key=f"ed_t_{row['id']}")
+                    edit_mt = st.number_input("Montant", value=float(row['montant']), key=f"ed_m_{row['id']}")
+                    edit_dt = st.text_input("Date", value=row['date'], key=f"ed_d_{row['id']}")
+                    
+                    d_b1, d_b2 = st.columns(2)
+                    if d_b1.button("Sauver", key=f"save_d_{row['id']}"):
+                        df_d_all = conn.read(worksheet="depenses")
+                        df_d_all.loc[df_d_all['id'] == row['id'], ['titre', 'montant', 'date']] = [edit_titre, edit_mt, edit_dt]
+                        conn.update(worksheet="depenses", data=df_d_all)
+                        st.rerun()
+                    if d_b2.button("Supprimer", key=f"del_d_{row['id']}"):
+                        supprimer_ligne_cloud('depenses', row['id'])
 
 # ONGLET 4 : ADMINISTRATION (MODIFIER / SUPPRIMER MEMBRES)
 with tab4:
