@@ -123,16 +123,27 @@ with tab3:
         date_d = st.date_input("Date")
         if st.form_submit_button("Enregistrer la dépense"):
             if titre_d and montant_d > 0:
-                d_id = int(df_depenses['id'].max() + 1) if not df_depenses.empty else 1
+                # Calcul sécurisé de l'ID
+                d_id = int(df_depenses['id'].max() + 1) if not df_depenses.empty and 'id' in df_depenses.columns else 1
                 nouveau_f = pd.DataFrame([{"id": d_id, "titre": titre_d, "montant": montant_d, "date": str(date_d)}])
                 conn.update(worksheet="depenses", data=pd.concat([df_depenses, nouveau_f], ignore_index=True))
                 st.rerun()
 
     st.write("**Historique des dépenses**")
-    for _, row in df_depenses.sort_values(by='date', ascending=False).iterrows():
-        with st.expander(f"📅 {row['date']} | {row['titre']} : {row['montant']} DH"):
-            if st.button("Supprimer", key=f"del_d_{row['id']}"):
-                supprimer_ligne_cloud('depenses', row['id'])
+    
+    # Vérification si le DataFrame est vide ou si la colonne 'date' existe
+    if df_depenses.empty:
+        st.info("Aucune dépense enregistrée pour le moment.")
+    elif 'date' not in df_depenses.columns:
+        st.error("⚠️ La colonne 'date' est introuvable. Vérifiez l'en-tête de votre onglet Google Sheets.")
+        st.write("Colonnes détectées :", list(df_depenses.columns)) # Utile pour déboguer
+    else:
+        # Tri et affichage
+        df_sorted = df_depenses.sort_values(by='date', ascending=False)
+        for _, row in df_sorted.iterrows():
+            with st.expander(f"📅 {row.get('date', 'N/A')} | {row.get('titre', 'Sans titre')} : {row.get('montant', 0)} DH"):
+                if st.button("Supprimer", key=f"del_d_{row['id']}"):
+                    supprimer_ligne_cloud('depenses', row['id'])
 
 # --- ONGLET 4 : ADMINISTRATION ---
 with tab4:
