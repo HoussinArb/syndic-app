@@ -136,12 +136,50 @@ with tab1:
             st.info("Aucun historique pour le moment.")
 
 # ONGLET 2 : BILAN
+# --- ONGLET 2 : BILAN AVEC COULEURS ---
 with tab2:
+    st.subheader("📋 Situation globale des paiements")
     if not df_membres.empty:
+        # Fusion des données
         gp = df_paiements.groupby('membre_id')['montant'].sum().reset_index()
         bilan = df_membres.merge(gp, left_on='id', right_on='membre_id', how='left').fillna(0)
-        bilan['reste'] = cotisation_annuelle - bilan['montant']
-        st.dataframe(bilan[['appartement', 'nom', 'montant', 'reste']], use_container_width=True, hide_index=True)
+        bilan['reste'] = cotisation - bilan['montant']
+        
+        # Définition du statut pour la couleur
+        def definir_statut(row):
+            if row['reste'] <= 0:
+                return "✅ SÉDÉ (Complet)"
+            elif row['montant'] > 0:
+                return "⏳ PARTIEL"
+            else:
+                return "❌ NON PAYÉ"
+        
+        bilan['Statut'] = bilan.apply(definir_statut, axis=1)
+
+        # Affichage stylisé
+        st.dataframe(
+            bilan[['appartement', 'nom', 'montant', 'reste', 'Statut']],
+            width="stretch",
+            hide_index=True,
+            column_config={
+                "montant": st.column_config.NumberColumn("Payé (DH)", format="%d DH"),
+                "reste": st.column_config.NumberColumn("Reste (DH)", format="%d DH"),
+                "Statut": st.column_config.SelectboxColumn(
+                    "État",
+                    options=["✅ SÉDÉ (Complet)", "⏳ PARTIEL", "❌ NON PAYÉ"],
+                )
+            }
+        )
+        
+        # Ajout d'un petit résumé visuel sous le tableau
+        c1, c2, c3 = st.columns(3)
+        nb_ok = len(bilan[bilan['reste'] <= 0])
+        nb_partiel = len(bilan[(bilan['reste'] > 0) & (bilan['montant'] > 0)])
+        nb_non = len(bilan[bilan['montant'] == 0])
+        
+        c1.success(f"À jour : {nb_ok}")
+        c2.warning(f"Partiels : {nb_partiel}")
+        c3.error(f"En attente : {nb_non}")
 
 # ONGLET 3 : DÉPENSES
 with tab3:
