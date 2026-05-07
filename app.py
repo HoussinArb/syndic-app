@@ -1,30 +1,39 @@
+
 import streamlit as st
 import pandas as pd
 from datetime import date
 from streamlit_gsheets import GSheetsConnection
 
-# ==========================================
-# 1. CONFIGURATION ET CONNEXION
-# ==========================================
+# 1. CONFIGURATION
 st.set_page_config(page_title="Syndic Mimosa Agadir", layout="wide", page_icon="🏢")
 
-# Connexion native à Google Sheets
+# Remplace par l'ID de TON fichier (le code entre /d/ et /edit)
+SHEET_ID = "TON_ID_DE_FICHIER_ICI" 
+
+# Tes GIDs constatés
+GID_MEMBRES = "0"
+GID_PAIEMENTS = "469308404"
+GID_DEPENSES = "108011384" # Trouve le chiffre à la fin de l'URL quand tu es sur l'onglet dépenses
+
+# 2. FONCTION DE LECTURE (Celle qui a réussi ton test)
+def charger_donnees_gid(gid):
+    url = f"https://docs.google.com/spreadsheets/d/1HYzTP9oGbv3yDprhmPLG39XS07qdej8GTSsN0ObxIes/export?format=csv&gid={gid}"
+    return pd.read_csv(url)
+
+try:
+    df_membres = charger_donnees_gid(GID_MEMBRES)
+    df_paiements = charger_donnees_gid(GID_PAIEMENTS)
+    df_depenses = charger_donnees_gid(GID_DEPENSES)
+except Exception as e:
+    st.error("Erreur de lecture GID. Vérifiez que le fichier est en 'Lecteur avec lien'.")
+    st.stop()
+
+# 3. CONNEXION POUR L'ÉCRITURE (Requiert les Secrets et le Partage)
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-def charger_donnees():
-    # Lecture des 3 onglets indispensables
-    df_m = conn.read(worksheet="membres")
-    df_p = conn.read(worksheet="paiements")
-    df_d = conn.read(worksheet="depenses")
-    return df_m, df_p, df_d
-
-# Initialisation des DataFrames
-df_membres, df_paiements, df_depenses = charger_donnees()
-
-# ==========================================
-# 2. FONCTIONS DE GESTION (CLOUD)
-# ==========================================
+# --- FONCTIONS DE GESTION ---
 def mettre_a_jour_membre_cloud(id_membre, nom, prenom, appt, tel, email):
+    # Pour écrire, on utilise obligatoirement la connexion sécurisée
     df = conn.read(worksheet="membres")
     df.loc[df['id'] == id_membre, ['nom', 'prenom', 'appartement', 'tel', 'email']] = [
         nom.upper(), prenom.capitalize(), appt.upper(), tel, email
@@ -39,31 +48,13 @@ def supprimer_ligne_cloud(table, row_id):
     conn.update(worksheet=table, data=df)
     st.rerun()
 
-# ==========================================
-# 3. BARRE LATÉRALE : AJOUT DE MEMBRES
-# ==========================================
-st.sidebar.header("👤 Nouveau Copropriétaire")
-with st.sidebar.form("ajout_membre", clear_on_submit=True):
-    nom = st.text_input("Nom")
-    prenom = st.text_input("Prénom")
-    appt = st.text_input("N° Appartement")
-    tel = st.text_input("Téléphone")
-    email = st.text_input("Email")
-    
-    if st.form_submit_button("Ajouter à la résidence"):
-        if nom and appt:
-            # Calcul de l'ID suivant (émulation auto-increment)
-            next_id = int(df_membres['id'].max() + 1) if not df_membres.empty else 1
-            nouveau = pd.DataFrame([{
-                "id": next_id, "nom": nom.upper(), "prenom": prenom.capitalize(), 
-                "appartement": appt.upper(), "tel": tel, "email": email
-            }])
-            df_m_maj = pd.concat([df_membres, nouveau], ignore_index=True)
-            conn.update(worksheet="membres", data=df_m_maj)
-            st.sidebar.success("Membre ajouté !")
-            st.rerun()
-        else:
-            st.sidebar.error("Nom et Appt requis !")
+# --- LE RESTE DE TON DASHBOARD (Identique à la version précédente) ---
+st.title("🏢 Syndic Mimosa Agadir")
+# ... (Copie ici la suite du dashboard que je t'ai donné plus haut)
+
+
+
+
 
 # ==========================================
 # 4. DASHBOARD FINANCIER
