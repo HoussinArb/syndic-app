@@ -83,19 +83,57 @@ st.divider()
 # --- ONGLETS ---
 tab1, tab2, tab3, tab4 = st.tabs(["📥 Encaisser", "📋 État", "📉 Dépenses", "🛠 Administration"])
 
-# ONGLET 1 : PAIEMENTS
+# --- ONGLET 1 : ENCAISSEMENT & CORRECTION ---
 with tab1:
-    if not df_membres.empty:
-        with st.form("p_form", clear_on_submit=True):
-            opts = {f"{r['appartement']} - {r['nom']}": r['id'] for _, r in df_membres.iterrows()}
-            choix = st.selectbox("Copropriétaire", options=opts.keys())
-            mt = st.number_input("Montant", min_value=0.0)
-            dt = st.date_input("Date")
-            if st.form_submit_button("Valider"):
-                p_id = int(df_paiements['id'].max() + 1) if not df_paiements.empty else 1
-                new_p = pd.DataFrame([{"id": p_id, "membre_id": opts[choix], "montant": mt, "date_paiement": str(dt)}])
-                conn.update(worksheet="paiements", data=pd.concat([df_paiements, new_p], ignore_index=True))
-                st.rerun()
+    col_saisie, col_verif = st.columns([1, 1])
+
+    with col_saisie:
+        st.subheader("📥 Nouveau versement")
+        if not df_membres.empty:
+            with st.form("f_paiement", clear_on_submit=True):
+                options = {f"Appt {row['appartement']} - {row['nom']}": row['id'] for _, row in df_membres.iterrows()}
+                choix = st.selectbox("Copropriétaire", options=options.keys())
+                mt = st.number_input("Montant (DH)", min_value=0.0, step=50.0)
+                dt = st.date_input("Date du versement")
+                
+                if st.form_submit_button("Valider l'encaissement"):
+                    if mt > 0:
+                        p_id = int(df_paiements['id'].max() + 1) if not df_paiements.empty else 1
+                        nouveau_p = pd.DataFrame([{
+                            "id": p_id, 
+                            "membre_id": options[choix], 
+                            "montant": mt, 
+                            "date_paiement": str(dt)
+                        }])
+                        conn.update(worksheet="paiements", data=pd.concat([df_paiements, nouveau_p], ignore_index=True))
+                        st.success("Versement enregistré !")
+                        st.rerun()
+
+    with col_verif:
+        st.subheader("🔍 Dernières saisies")
+        if not df_paiements.empty:
+            # On fusionne pour voir le nom du membre au lieu de son ID
+            df_suivi = df_paiements.merge(df_membres[['id', 'nom', 'appartement']], left_on='membre_id', right_on='id', suffixes=('', '_m'))
+            df_suivi = df_suivi.sort_values(by='id', ascending=False).head(5) # Les 5 derniers
+            
+            for _, row in df_suivi.iterrows():
+                with st.expander(f"💰 {row['nom']} ({row['appartement']}) : {row['montant']} DH"):
+                    # Formulaire de correction rapide
+                    new_mt = st.number_input("Corriger montant", value=float(row['montant']), key=f"edit_mt_{row['id']}")
+                    new_dt = st.text_input("Corriger date (AAAA-MM-JJ)", value=row['date_paiement'], key=f"edit_dt_{row['id']}")
+                    
+                    c1, c2 = st.columns(2)
+                    if c1.button("Sauver", key=f"btn_save_{row['id']}"):
+                        # Mise à jour dans le cloud
+                        df_brut = conn.read(worksheet="paiements")
+                        df_brut.loc[df_brut['id'] == row['id'], ['montant', 'date_paiement']] = [new_mt, new_dt]
+                        conn.update(worksheet="paiements", data=df_brut)
+                        st.rerun()
+                        
+                    if c2.button("Supprimer", key=f"btn_del_{row['id']}"):
+                        supprimer_ligne_cloud('paiements', row['id'])
+        else:
+            st.info("Aucun historique pour le moment.")
 
 # ONGLET 2 : BILAN
 with tab2:
