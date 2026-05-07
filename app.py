@@ -143,12 +143,14 @@ with tab2:
         # Fusion des données
         gp = df_paiements.groupby('membre_id')['montant'].sum().reset_index()
         bilan = df_membres.merge(gp, left_on='id', right_on='membre_id', how='left').fillna(0)
-        bilan['reste'] = cotisation - bilan['montant']
+        
+        # UTILISATION DU BON NOM DE VARIABLE ICI :
+        bilan['reste'] = cotisation_annuelle - bilan['montant']
         
         # Définition du statut pour la couleur
         def definir_statut(row):
             if row['reste'] <= 0:
-                return "✅ SÉDÉ (Complet)"
+                return "✅ COMPLET"
             elif row['montant'] > 0:
                 return "⏳ PARTIEL"
             else:
@@ -156,7 +158,7 @@ with tab2:
         
         bilan['Statut'] = bilan.apply(definir_statut, axis=1)
 
-        # Affichage stylisé
+        # Affichage stylisé (Syntaxe 2026)
         st.dataframe(
             bilan[['appartement', 'nom', 'montant', 'reste', 'Statut']],
             width="stretch",
@@ -166,20 +168,21 @@ with tab2:
                 "reste": st.column_config.NumberColumn("Reste (DH)", format="%d DH"),
                 "Statut": st.column_config.SelectboxColumn(
                     "État",
-                    options=["✅ SÉDÉ (Complet)", "⏳ PARTIEL", "❌ NON PAYÉ"],
+                    options=["✅ COMPLET", "⏳ PARTIEL", "❌ NON PAYÉ"],
                 )
             }
         )
         
-        # Ajout d'un petit résumé visuel sous le tableau
+        # Résumé visuel
+        st.write("---")
         c1, c2, c3 = st.columns(3)
         nb_ok = len(bilan[bilan['reste'] <= 0])
         nb_partiel = len(bilan[(bilan['reste'] > 0) & (bilan['montant'] > 0)])
         nb_non = len(bilan[bilan['montant'] == 0])
         
-        c1.success(f"À jour : {nb_ok}")
-        c2.warning(f"Partiels : {nb_partiel}")
-        c3.error(f"En attente : {nb_non}")
+        c1.metric("🏠 À jour", f"{nb_ok}")
+        c2.metric("⏳ Partiels", f"{nb_partiel}")
+        c3.metric("🚨 En attente", f"{nb_non}")
 
 # ONGLET 3 : DÉPENSES
 with tab3:
